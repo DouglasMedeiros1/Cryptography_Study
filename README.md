@@ -10,10 +10,8 @@ I am currently studying **Multiplatform Software Development** in college, and i
 
 ## Apresentation Video
 
-<video width="600" controls>
-  <source src="Midia/Apresentation.mkv" type="video/mkv">
-  Seu navegador não suporta a tag de vídeo.
-</video>
+📽️ [Clique aqui para assistir à apresentação](Midia/Apresentation.mkv)
+
 
 
 
