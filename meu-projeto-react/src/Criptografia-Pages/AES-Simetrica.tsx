@@ -1,8 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CryptoJS from 'crypto-js'; // Certifique-se de ter instalado a biblioteca: npm install crypto-js
-
-// Chave fixa definida pelo sistema (16 caracteres para AES-128)
-const FIXED_AES_KEY = "0123456789abcdef";
 
 const App: React.FC = () => {
   // Estados para armazenar a mensagem, chave, mensagem criptografada e descriptografada
@@ -11,22 +8,49 @@ const App: React.FC = () => {
   const [decryptedMessage, setDecryptedMessage] = useState('');
   const [encryptionKey, setEncryptionKey] = useState('');
 
-  // Função para criptografar e descriptografar a mensagem usando a chave definida
+  // Carregar a chave AES do backend
+  useEffect(() => {
+    const fetchAESKey = async () => {
+      try {
+        const response = await fetch('http://localhost:3001/api/aeskeys'); // Ajuste a URL conforme necessário
+        if (response.ok) {
+          const data = await response.json();
+          if (data.length > 0) {
+            setEncryptionKey(data[0].key_value); // Supondo que o backend retorna um array de chaves e usamos a primeira
+          } else {
+            console.error('Nenhuma chave AES encontrada no backend.');
+          }
+        } else {
+          console.error('Erro ao carregar a chave AES.');
+        }
+      } catch (error) {
+        console.error('Erro ao conectar ao backend:', error);
+      }
+    };
+
+    fetchAESKey();
+  }, []);
+
+  // Função para criptografar e descriptografar a mensagem usando a chave carregada
   const handleSend = () => {
-    if (!message) return; // Se não houver mensagem, não faz nada
+    if (!message || !encryptionKey) {
+      alert('Por favor, insira uma mensagem e aguarde o carregamento da chave.');
+      return;
+    }
 
-    // Utiliza a chave fixa definida no sistema
-    const key = FIXED_AES_KEY;
-    setEncryptionKey(key);
+    try {
+      // Criptografa a mensagem utilizando AES e a chave carregada
+      const encrypted = CryptoJS.AES.encrypt(message, encryptionKey).toString();
+      setEncryptedMessage(encrypted);
 
-    // Criptografa a mensagem utilizando AES e a chave fixa
-    const encrypted = CryptoJS.AES.encrypt(message, key).toString();
-    setEncryptedMessage(encrypted);
-
-    // Descriptografa a mensagem usando a mesma chave fixa
-    const decrypted = CryptoJS.AES.decrypt(encrypted, key);
-    const originalText = decrypted.toString(CryptoJS.enc.Utf8);
-    setDecryptedMessage(originalText);
+      // Descriptografa a mensagem usando a mesma chave carregada
+      const decrypted = CryptoJS.AES.decrypt(encrypted, encryptionKey);
+      const originalText = decrypted.toString(CryptoJS.enc.Utf8);
+      setDecryptedMessage(originalText);
+    } catch (error) {
+      console.error('Erro durante a criptografia/descriptografia:', error);
+      alert('Erro ao processar a mensagem.');
+    }
   };
 
   // Função para limpar os estados
@@ -34,7 +58,6 @@ const App: React.FC = () => {
     setMessage('');
     setEncryptedMessage('');
     setDecryptedMessage('');
-    setEncryptionKey('');
   };
 
   return (
